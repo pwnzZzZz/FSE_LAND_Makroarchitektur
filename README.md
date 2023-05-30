@@ -66,21 +66,407 @@ Der Modulith-Ansatz ermöglicht es, die Vorteile eines monolithischen Ansatzes b
 
 Es ist wichtig anzumerken, dass der Begriff "Modulith" kein allgemein anerkannter Begriff ist und keine einheitliche Definition hat. Die genaue Ausgestaltung eines Moduliths kann je nach Kontext, Anforderungen und Präferenzen variieren.
 
+#
 ### Wie funktioniert die Ports and Adapters Architektur?
+Die Ports and Adapters Architektur, auch bekannt als Hexagonal Architecture oder Onion Architecture, ist ein Architekturmuster, das darauf abzielt, die Geschäftslogik einer Anwendung von externen Abhängigkeiten und Infrastrukturdetails zu entkoppeln.
+
+Diese Architektur ermöglicht eine klare Trennung der Verantwortlichkeiten und eine bessere Testbarkeit der einzelnen Komponenten. Die externe Infrastruktur wird durch Ports und Adapter isoliert, wodurch die Geschäftslogik unabhängig von spezifischen Technologien oder Frameworks bleibt. Dadurch wird die Flexibilität und Austauschbarkeit der Komponenten erleichtert und die Gesamtarchitektur wird robuster und besser wartbar.
+
+Die Ports and Adapters Architektur besteht aus drei Kernkonzepten:
+
+-   Ports: Ports sind Schnittstellen oder Verträge, die die Interaktion zwischen der Geschäftslogik und der Außenwelt definieren. Es gibt zwei Arten von Ports:
+
+    - Inbound Ports (Eingangsports): Diese Ports ermöglichen den Zugriff auf die Geschäftslogik von externen Komponenten wie Benutzerschnittstellen, APIs oder Event-Streams. Sie definieren die erwarteten Eingabeoperationen, über die die externen Komponenten mit der Geschäftslogik interagieren können.
+
+    - Outbound Ports (Ausgangsports): Diese Ports ermöglichen der Geschäftslogik den Zugriff auf externe Ressourcen wie Datenbanken, Dateisysteme oder externe Services. Sie definieren die erwarteten Ausgabeoperationen, über die die Geschäftslogik mit den externen Ressourcen kommunizieren kann.
+
+-   Adapters: Adapters sind Implementierungen der Ports, die die eigentliche Kommunikation zwischen der Geschäftslogik und den externen Komponenten oder Ressourcen ermöglichen. Sie sind für die Anpassung der Kommunikationsschnittstellen verantwortlich, um die Interaktion zwischen den verschiedenen Schichten zu erleichtern. Es gibt zwei Arten von Adaptern:
+
+    - Inbound Adapter: Dieser Adapter implementiert den Eingangsport und ermöglicht die Übersetzung von externen Anfragen oder Ereignissen in Formate und Aktionen, die von der Geschäftslogik verstanden werden.
+
+    - Outbound Adapter: Dieser Adapter implementiert den Ausgangsport und bietet die spezifischen Implementierungen für die Kommunikation mit externen Ressourcen. Er stellt sicher, dass die Anfragen der Geschäftslogik an die externen Ressourcen weitergeleitet und die entsprechenden Ergebnisse zurückgegeben werden.
+
+- Geschäftslogik: Die eigentliche Geschäftslogik der Anwendung wird in der Kernschicht implementiert. Diese Schicht enthält alle domänespezifischen Regeln und Operationen, die von den Ports und Adapters verwendet werden.
 
 
+#
 ### DDD: Was sind die wesentlichen Bausteine des modellgetriebenen Entwurfs (Taktische Pattern) aus DDD?
+Im modellgetriebenen Entwurf (taktische Patterns) der Domain-Driven Design (DDD) Architektur gibt es mehrere wesentliche Bausteine, die dabei helfen, komplexe Domänenmodelle zu erstellen und zu organisieren. Diese Bausteine sind:
+
+-   Entity (Entität): Eine Entität repräsentiert ein Objekt mit einer eindeutigen Identität. Sie hat Zustand und Verhalten, und Änderungen an einer Entität werden im Kontext der Domäne verfolgt. Entitäten werden häufig über ihre Identität identifiziert und können über die Zeit hinweg verändert werden.
+
+-   Value Object (Wertobjekt): Ein Wertobjekt repräsentiert einen konzeptuellen Wert innerhalb der Domäne, der keine eigene Identität hat. Wertobjekte sind unveränderlich (immutable) und werden meist für Eigenschaften oder Attribute verwendet, die zusammengehören und als Einheit behandelt werden sollten.
+
+-   Aggregate: Ein Aggregate ist eine Gruppierung von verwandten Entitäten und Wertobjekten. Es stellt eine konsistente Einheit dar, bei der eine spezifische Entität als Wurzel des Aggregats fungiert. Das Aggregat definiert Regeln und Invarianten, um die Konsistenz der darin enthaltenen Entitäten und Wertobjekte sicherzustellen.
+
+- Domain Event (Domänenereignis): Ein Domain Event ist etwas, das in der Domäne passiert und von Bedeutung ist. Es wird oft verwendet, um zustandsändernde Ereignisse zu modellieren, die für das Geschäft relevant sind.
 
 
-Abgabe der Architekturanalyse des bestehenden erplite-Backends
+-   Repository: Ein Repository stellt einen Mechanismus zum Zugriff auf und zur Persistenz von Entitäten und Aggregaten bereit. Es bietet Methoden zum Abfragen, Ändern und Speichern von Objekten in einer bestimmten Domäne.
+
+-   Service: Ein Service ist eine operationale Einheit, die Domänenlogik enthält und Aktionen ausführt, die nicht natürlicherweise in eine einzelne Entität oder ein Aggregate passen. Services unterstützen komplexe Geschäftsprozesse und koordinieren die Zusammenarbeit zwischen verschiedenen Entitäten und Aggregaten.
+
+-   Factory: Eine Factory ist eine Komponente, die die Erstellung von komplexen Objekten oder Aggregaten vereinfacht. Sie ist verantwortlich für die Erstellung und Konfiguration neuer Instanzen und kann komplexe Initialisierungslogik oder Datenzusammenstellung enthalten.
+
+Diese Bausteine des modellgetriebenen Entwurfs in DDD werden verwendet, um die Komplexität der Domäne zu bewältigen und eine klarere Organisation und Strukturierung des Domänenmodells zu ermöglichen. Indem sie die Sprache der Domäne in den Code übersetzen, helfen sie dabei, ein besser verständliches, wartbares und erweiterbares Software-Design zu schaffen.
+
+#
+#
+## Abgabe der Architekturanalyse des bestehenden erplite-Backends
+
+#
 ### Dokumentation (textuelle Beschreibung, Codeauszüge, C4-Diagramme, Klassendiagramme) der Ports-Und-Adapters-Architektur und der DDD-Bestandteile (taktische Muster) von Ordermanagement anhand der gegebenen Anwendungsfälle, die schon implementiert sind:
--   Bestellung aufgeben
--   Bestellung auf bezahlt setzen
--   Packliste generieren
--   Packlistenitems abhaken
--   Bestellung auf IN_DELIVERY setzen wenn alle Packlistenitems gepackt sind
+
+#
+
+![Erplite2](img/erplite2.png)
+
+Das Programm läuft unter einer in-memory H2 Datenbank und ist in 3 Hauptmodule unterteilt:
+- Customermanagement
+- Ordermanagement
+- Stockmanagement
+
+Außerdem gibt es noch einen Shared Kernel, der als DDD Modul dient.
+Es werden von ihm Funktionen bereitgestellt, die von allen 3 Hauptmodulen verwendet werden.
+
+### DDD-Bestandteile Ordermanagement:
+- Entity: Die Klasse Order ist in unserem Beispiel eine Entität.
+
+![Entity_Order](img/entityOrder.png)
+    
+- Value Objects: 
+
+![Value_Objects](img/valueObjects.png)
+
+- Domain Events:
+
+![Domain_Events](img/domainEvents.png)
+
+- Service/Application Layer:
+
+![Service](img/ordermanagementService.png)
+
+- Infrastructure Layer:
+
+Die db- und messaging.spring-Pakete stellen den Infrastructure Layer dar.
+
+![Infrastructure](img/ordermanagementInfrastructure.png)
+
+
+- Interfaces (Ports):
+
+![Ports](img/ordermanagementPorts.png)
+
+
+- Adapters:
+
+![Adapters](img/ordermanagementAdapters.png)
+
+
+
+##   Bestellung aufgeben
+
+Es wird eine neue Bestellung über einen HTTP POST Request auf die Ordermanagement API abgesetzt.
+
+```java
+@PostMapping("/orders/")
+    public ResponseEntity placeNewOrder(@RequestBody @Valid PlaceOrderCommand placeOrderCommand, BindingResult bindingResult) {
+
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling place new order api request ...");
+
+        HashMap<String, String> errors = new HashMap<>();
+
+        if (bindingResult.hasErrors()) {
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Errors in placeOrderCommand detected!");
+            for (FieldError fieldError : bindingResult.getFieldErrors()) {
+                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+            }
+            throw new OrderPlacedFieldValidationException("Validation errors for order placement!", errors);
+        }
+
+        OrderResponse orderResponse = orderCommandService.handle(placeOrderCommand);
+
+        String resourceLocation = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() + "/orders/" + orderResponse.orderID();
+        try {
+            return ResponseEntity.created(new URI(resourceLocation)).body(orderResponse);
+        } catch (URISyntaxException e) {
+            return ResponseEntity.noContent().build();
+        }
+    }
+```
+Nachdem eine Bestellung erfolgreich war, wird eine neue Order Response erstellt. Hierbei wird die handle() Methode der Port-Klasse OrderCommandService aufgerufen. Der dazugehörige Adapter OderCommandServiceImpl springt an und es wird die Methode handle(PlaceOrderCommand) aufgerufen.
+
+```java
+    @Transactional
+    public OrderResponse handle(PlaceOrderCommand placeOrderCommand) {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handle place order command ...");
+        List<String> errors = validatePlaceOrderCommand(placeOrderCommand);
+        if (errors.size() != 0) throw new OrderDataValidationException(errors);
+
+        List<LineItem> lineItemList = new ArrayList<>();
+        int i = 1;
+        for (CartItem cartItem : placeOrderCommand.cartItems()) {
+            lineItemList.add(new LineItem(
+                            new OrderPosition(i),
+                            new ProductNumber(cartItem.productNumber()),
+                            new Name(cartItem.productName()),
+                            new MonetaryAmount(new BigDecimal(cartItem.priceNet())),
+                            new Percentage(cartItem.tax()),
+                            new Amount(cartItem.amount())
+                    )
+            );
+            i++;
+        }
+
+        Order orderToInsert = new Order(
+                new OrderID("ONR" + UUID.randomUUID().toString().substring(0, 7)),
+                new CustomerData(
+                        new CustomerID(placeOrderCommand.customerID()),
+                        new Name(placeOrderCommand.customerFirstname()),
+                        new Name(placeOrderCommand.customerLastname()),
+                        new Email(placeOrderCommand.customerEmail()),
+                        placeOrderCommand.customerStreet(),
+                        placeOrderCommand.customerZipcode(),
+                        placeOrderCommand.customerCity(),
+                        placeOrderCommand.customerCountry()
+                ),
+                LocalDateTime.now(),
+                lineItemList,
+                OrderState.PLACED
+        );
+
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Insert new order in DB ...");
+        Optional<Order> orderOptional = this.orderRepository.insert(orderToInsert);
+
+        if (orderOptional.isPresent()) {
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Publishing order placed domain event ...");
+            orderOutgoingMessageRelay.publish(new OrderPlacedEvent(OrderResponseMapper.toResponseFromDomain(orderOptional.get())));
+            return OrderResponseMapper.toResponseFromDomain(orderOptional.get());
+        } else {
+            throw new OrderPlacementNotSuccessfullException("OrderQueryServiceImpl: Order could not be placed!");
+        }
+    }
+
+```
+
+Falls keine Fehler vorhanden sind, wird pro Artikel 1 Line Item erstellt und der Line Item List zugewiesen. Es wird dann eine neue Bestellung erstellt, wobei eine zufällige Order ID erstellt wird. Danach wird ein Customer Data Objekt erstellt und die Kundendaten aus dem placeOrderCommand Parameter entnommen. Ebenfalls wird die aktuelle Zeit, die Item List und der Status der Bestellung wird auf OrderState.PLACED gesetzt. Zum Schluss wird die Bestellung noch einem Optional<Order> Objekt zugewiesen und in die Datenbank gesichert. Falls die Bestellung erfolgreich in die Datenbank gesichert wurde, springt die orderOutgoingMessageRelay.publish() Methode an.
+
+![Bestellung_Aufgeben](img/createOrder.png)
+
+
+
+##   Bestellung auf bezahlt setzen
+
+Um eine Bestellung auf bezahlt zu setzen, müssen wir zuänchst einen HTTP POST Request auf die Ordermanagement API absetzen.
+Hierbei wird die zuvor generierte Order ID als Paramater mitgegeben.
+
+```java
+    @PostMapping("/orders/checkpayment/{orderid}")
+    public ResponseEntity validatePaymentForOrderWithId(@PathVariable String orderid) {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling check payment for order api request ...");
+        this.orderCommandService.handle(new OrderPaymentCheckCommand(orderid));
+        return ResponseEntity.accepted().body("Order payment check executed. Order payment ok!");
+    }
+```
+
+Die handle(OderPaymendCheckCommand) Methode wird ausgeführt.
+
+
+```java
+  @Override
+    @Transactional
+    public void handle(OrderPaymentCheckCommand orderPaymentCheckCommand) throws OrderPaymentCheckFailedException {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling order payment check command ...");
+        if (orderPaymentCheckCommand == null)
+            throw new OrderPaymentCheckFailedException("Empty command for order payment check!");
+        if (!OrderID.isValid(orderPaymentCheckCommand.orderID()))
+            throw new OrderPaymentCheckFailedException("Order ID for order payment check not valid!");
+        Optional<Order> optionalOrderToCheck = this.orderRepository.getById(new OrderID(orderPaymentCheckCommand.orderID()));
+        if (optionalOrderToCheck.isPresent()) {
+            Order order = optionalOrderToCheck.get();
+            try {
+                order.orderStateTransitionTo(OrderState.PAYMENT_VERIFIED);
+                this.orderRepository.updateOrderWithNewState(order);
+                this.orderOutgoingMessageRelay.publish(new OrderPaymentValidatedEvent(OrderResponseMapper.toResponseFromDomain(order)));
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Payment validated event published!");
+            } catch (OrderStateChangeNotPossibleException orderStateChangeNotPossibleException) {
+                throw new OrderPaymentCheckFailedException("Order payment check not possible. Order in wrong state! " + orderStateChangeNotPossibleException.getMessage());
+            }
+        } else {
+            throw new OrderPaymentCheckFailedException("Order with Id " + orderPaymentCheckCommand.orderID() + " not found for payment check!");
+        }
+    }
+```
+
+Falls es keine Fehler gibt, wird eine Optional<Order> Objekt erstellt, in dem die gewünschte Zahlung aus der DB geholt wird. Wenn das Optional nicht leer ist, wir der Status der Bestellung auf PAYMENT_VERIFIED gesetzt und es wird ein Event abgesetzt.
+
+![Bestellung_Bezahlt](img/checkPayment.png)
+
+
+##   Packliste generieren
+
+Die Packliste wird generiert, sobald über this.orderOutgoingMessageRelay.publish() das OrderPaymentValidatedSpringEvent abgesetzt wird. Diese Klasse ruft dann die onApplicationEvent() Methode auf, welche die Packliste generiert.
+
+```java
+
+@Service
+@AllArgsConstructor
+class StockIncomingMessageHandler implements ApplicationListener<OrderPaymentValidatedSpringEvent> {
+
+    PackingRepository packingRepository;
+
+    @Override
+    @Async("threadPoolTaskExecutor")
+    public void onApplicationEvent(OrderPaymentValidatedSpringEvent event) {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling order payment validated spring event ...");
+
+        OrderResponse orderResponse = event.getOrderResponse();
+
+        Packing packingToSaveToDb =
+                Packing.builder()
+                        .id(null)
+                        .orderId(orderResponse.orderID())
+                        .deliveryData(new DeliveryData(
+                                        orderResponse.customerFirstname() + " " + orderResponse.customerLastname(),
+                                        orderResponse.customerStreet(),
+                                        orderResponse.customerZipcode(),
+                                        orderResponse.customerCity(),
+                                        orderResponse.customerCountry()
+                                )
+                        ).packingItemList(null) // List is generated down under
+                        .build();
+
+        List<PackingItem> packingItemList = new ArrayList<>();
+        for (LineItemResponse lineItemResponse : orderResponse.orderLineItems()) {
+            packingItemList.add(
+                    new PackingItem(
+                            null,
+                            lineItemResponse.productNumber(),
+                            lineItemResponse.productName(),
+                            lineItemResponse.amount(),
+                            false,
+                            packingToSaveToDb
+                    )
+            );
+        }
+        packingToSaveToDb.setPackingItemList(packingItemList);
+        this.packingRepository.save(packingToSaveToDb);
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "New packing list created and saved in db ...");
+    }
+}
+
+```
+
+Hier wird ein HTTP GET Request mit der Order Id auf die Stocking API abgesetzt, wobei ersichtilich ist, dass die Bestellung noch nicht verpackt wurde.
+![Bestellung_Bezahlt](img/getPackingByOrderId.png)
+
+
+##   Packlistenitems abhaken
+
+Es wird ein HTTP POST Request mit der Packing Item Id auf die Stocking API abgesetzt.
+Falls das Item vorhanden ist, wird der Status des Items auf verpackt gesetzt. Falls mehrere Items in der Item List vorhanden sind, müssen alle den Status verpackt besitzen, damit ein neues publishOrderPackedSpringEventForOrderId Event abgesetzt wird.
+
+```java
+    @PostMapping("/setPackedForPacking/{packingItemId}")
+    public void setPackingItemPackedForPacking(@PathVariable Long packingItemId) {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling packing for item# " + packingItemId);
+
+        Optional<PackingItem> optionalPackingItem = this.packingItemRepository.findById(packingItemId);
+        if (optionalPackingItem.isPresent()) {
+            PackingItem packingItem = optionalPackingItem.get();
+            packingItem.setPacked(true);
+            packingItemRepository.save(packingItem);
+
+            Long packingId = packingItem.getPacking().getId();
+
+            Optional<Packing> packing = this.packingRepository.findById(packingId);
+
+            boolean allpaked = true;
+            for (PackingItem item : packing.get().getPackingItemList()) {
+                if (!item.isPacked()) allpaked = false;
+            }
+            if (allpaked) {
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "All items for order# " + packing.get().getOrderId() + "packed. Publishing event ...");
+                this.stockMessagePublisher.publishOrderPackedSpringEventForOrderId(packing.get().getOrderId());
+            }
+        }
+    }
+```
+
+Hier wird ein HTTP POST Request mit der Item Id auf die Stocking API abgesetzt. Falls dies erfolgreich war, wird mit dem Statuscode 200 gewantwortet.
+![Packlistenitems_Abhaken](img/setPackedForPacking1.png)
+
+
+##   Bestellung auf PREPARING_DELIVERY setzen wenn alle Packlistenitems gepackt sind
+
+Die angeführte Klasse fängt das OderPackedSpringEvent ab und ruft dann die orderIncomingMessagesPort.handle() Methode auf.
+
+```java
+@Service
+@AllArgsConstructor
+class IncomingOrderPackedSpringEventHandler implements ApplicationListener<OrderPackedSpringEvent> {
+
+    private OrderIncomingMessagesPort orderIncomingMessagesPort;
+
+    @Override
+    @Async("threadPoolTaskExecutor")
+    public void onApplicationEvent(OrderPackedSpringEvent event) {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Order packed event received for order# " + event.getOrderID());
+        this.orderIncomingMessagesPort.handle(new OrderPackedEvent(new OrderID(event.getOrderID())));
+    }
+}
+
+```
+
+Diese handle() Methode prüft ob die Bestellung mit der angegebenen ID vorhanden ist und speichert diese in ein Optional-Objekt. Der Status der Bestellung wird auf PREPARING_FOR_DELIVERY gesetzt und die Bestellung wird in der Datenbank aktualisiert.
+
+```java
+ @Transactional
+    public void handle(OrderPackedEvent orderPackedEvent) {
+        //Meterialize object into Memory, place changes, and forward the domain object to repository
+        //this ensures, that businesslogic will be executed und object is in consistent state.
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling order packed event ...");
+        Optional<Order> optionalOrderToCheck = this.orderRepository.getById(orderPackedEvent.orderId());
+        if (optionalOrderToCheck.isPresent()) {
+            Order order = optionalOrderToCheck.get();
+            try {
+                order.orderStateTransitionTo(OrderState.PREPARING_FOR_DELIVERY);
+                this.orderRepository.updateOrderWithNewState(order);
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Order state changed to preparing_for_delivery, changed order persisted!");
+            } catch (OrderStateChangeNotPossibleException orderStateChangeNotPossibleException) {
+                throw new OrderPaymentCheckFailedException("Order state change to preparing for delivery not possible! " + orderStateChangeNotPossibleException.getMessage());
+            }
+        } else {
+            throw new OrderWithGivenIDNotFoundException("Order with Id " + orderPackedEvent.orderId().id() + " not found for state change to preparing for delivery!");
+        }
+    }
+```
+
+#
 ### Dokumentation (textuelle Beschreibung, Codeauszüge, Diagramme, C4-Diagramme, Klassendiagramme) der "Architektur" von Stockmanagement anhand der gegebenen Anwendungsfälle, die schon implementiert sind:
+
+### DDD-Bestandteile Stockmanagement:
+
+- Domain Layer:
+
+![Domain](img/stockmanagementDomain.png)
+
+- Infrastructure Layer:
+
+![Infrastructure](img/stockmanagementInfrastructure.png)
+
+- Adapters:
+
+![Adapters](img/stockmanagementAdapter.png)
+
+
+
+
 -   Packingliste anlegen
 -   Packingitems als verpackt markieren
+
+
+Wie oben?
+?????????? Herr Dr. Landerer fragen!!!!!!!!!!
 
 
