@@ -1,5 +1,6 @@
 # FSE_LAND_Makroarchitektur
 
+## Aufgabe Makroarchitektur Teil 1
 ## Theorie: Recherchiere zu folgenden Fragestellungen und fasse deine Erkenntnisse übersichtlich und illustrativ zusammen!
 
 #
@@ -470,3 +471,319 @@ Wie oben?
 ?????????? Herr Dr. Landerer fragen!!!!!!!!!!
 
 
+## Aufgabe Makroarchitektur Teil 3
+
+#
+###  1. Inbetriebnahme der Microservice-Variante von erplite
+- als Schritt für Schritt-Anleitung mit Screenshots und Text zu dokumentieren
+
+Im ersten Schritt starten wir über die docker-compose.yml die benötigten Docker Instanzen.
+![Docker-Container](img/teil3/docker_compose.png)
+
+Danach werden alle Projekte einzeln gestartet. Der servicediscovery wird hierbei als erstes gestartet, da die anderen services sich bei diesem registrieren müssen.
+![Services](img/teil3/services.png)
+
+Nachdem das Backend erfolgreich durchgestartet wurde, wird nun im Frontend Ordner die webshop.html mit Visual Studio Code geöffnet, dies stellt uns einen Webserver auf Port 5500 bereit.
+![Frontend](img/teil3/frontend.png)
+
+
+#
+###  2. Abgabe einer Architekturanalyse des bestehenden erplitems-Backends
+- Schriftliche Dokumentation der Architektur als C4-Containerdiagramm und C4-Componentendiagramm incl. textuellen Beschreibungen, Codeauszügen und Screenshots.
+
+C4-Containerdiagramm:
+![C4_Containerdiagramm](out/diagrams/container/ErpliteApplication_C4Container.png)
+
+C4-Componentendiagramm:
+![C4_Componentendiagramm](out/diagrams/component_ordermanagement/Ordermanagement_C4ComponentBackend.png)
+
+
+
+
+- Die beschriebenen Use-Cases (Bestellung anlegen, Payment verifizieren, Packlistenitems abhaken) entlang der Architektur beschreiben, Codeauszüge zeigen, Screenshots mit den Resultaten zeigen, textuelle Beschreibungen dazu
+
+Bestellung anlegen
+![PlaceOrder](img/teil3/placeOrder.png)
+
+![PlaceOrder_2](img/teil3/placeOrder2.png)
+
+Wenn wir den Button Testbestellung betätigen, wird ein POST Request auf api/v1/orders abgesetzt. Der ApiGateway hat Routen zu bestimmten URIs definiert. Damit ist es möglich, die Services über den Namen anzusprechen.
+
+![Api_Gateway](img/teil3/api_gateway.png)
+
+In unserer webshop.html wird die asynchrone Funktion putOrder() aufgerufen.
+Diese übergibt über einen POST Request Daten an unser Backend.
+
+```js
+    async function putorder()
+    {
+     const resp = await fetch('http://localhost:9999/api/v1/orders',{
+            method:'POST',
+            headers:{
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: `{
+                        "customerID": "CUS1d34e56",
+                        "customerFirstname": "Caesar",
+                        "customerLastname": "Franklin",
+                        "customerEmail": "a.b@c.de",
+                        "customerStreet": "Hollywood Boulevard 2",
+                        "customerZipcode" : "3452",
+                        "customerCity" : "LA",
+                        "customerCountry" : "USA",
+                        "cartItems": [
+                            {
+                            "productNumber": "P123RE123D",
+                            "productName" : "MacBook Pro 2022",
+                            "priceNet" : 1000,
+                            "tax" : 20,
+                            "amount": 1
+                            },
+                            {
+                            "productNumber": "O12345RE12",
+                            "productName" : "Ipad Pro 2021",
+                            "priceNet" : 99.99,
+                            "tax" : 10,
+                            "amount": 10
+                            }
+                        ]
+                    }`
+        })
+        const data = await resp.json()
+        alert(`New order with ID ${data.orderID} placed!`)
+        getallorders();
+    }
+
+```
+Dies führt dazu, dass der OrderRestController mit PostMapping anspringt.
+Hierbei wird die orderCommandService.handle() Methode aufgerufen, die über den jeweiligen Paramater entscheidet, welche Implementierung benutzt wird.
+
+```java
+    @PostMapping("/orders")//TODO: Hier von /orders/ mit trailing slash gewechselt auf /orders
+    public ResponseEntity placeNewOrder(@RequestBody @Valid PlaceOrderCommand placeOrderCommand, BindingResult bindingResult) {
+
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling place new order api request ...");
+
+        HashMap<String, String> errors = new HashMap<>();
+
+        if (bindingResult.hasErrors()) {
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "Errors in placeOrderCommand detected!");
+            for (FieldError fieldError : bindingResult.getFieldErrors()) {
+                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+            }
+            throw new OrderPlacedFieldValidationException("Validation errors for order placement!", errors);
+        }
+
+        OrderResponse orderResponse = orderCommandService.handle(placeOrderCommand);
+
+        String resourceLocation = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() + "/api/v1/orders/" + orderResponse.orderID();
+        try {
+            return ResponseEntity.created(new URI(resourceLocation)).body(orderResponse);
+        } catch (URISyntaxException e) {
+            return ResponseEntity.noContent().build();
+        }
+    }
+```
+
+Hierbei wird die orderCommandService.handle() Methode aufgerufen, die über den jeweiligen Paramater entscheidet, welche Implementierung benutzt wird.
+
+```java
+public interface OrderCommandService {
+    OrderResponse handle(PlaceOrderCommand placeOrderCommand) throws OrderPlacementNotSuccessfullException;
+    void handle(OrderPaymentCheckCommand orderPaymentCheckCommand) throws OrderPaymentCheckFailedException;
+    void handle(OrderInitiateDeliveryCommand orderInitiateDeliveryCommand) throws OrderInitiateDeliveryException;
+}
+
+```
+
+```java
+@Transactional
+    public OrderResponse handle(PlaceOrderCommand placeOrderCommand) {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handle place order command ...");
+        List<String> errors = validatePlaceOrderCommand(placeOrderCommand);
+        if (errors.size() != 0) throw new OrderDataValidationException(errors);
+
+        List<LineItem> lineItemList = new ArrayList<>();
+        int i = 1;
+        for (CartItem cartItem : placeOrderCommand.cartItems()) {
+            lineItemList.add(new LineItem(
+                            new OrderPosition(i),
+                            new ProductNumber(cartItem.productNumber()),
+                            new Name(cartItem.productName()),
+                            new MonetaryAmount(new BigDecimal(cartItem.priceNet())),
+                            new Percentage(cartItem.tax()),
+                            new Amount(cartItem.amount())
+                    )
+            );
+            i++;
+        }
+
+        Order orderToInsert = new Order(
+                new OrderID("ONR" + UUID.randomUUID().toString().substring(0, 7)),
+                new CustomerData(
+                        new CustomerID(placeOrderCommand.customerID()),
+                        new Name(placeOrderCommand.customerFirstname()),
+                        new Name(placeOrderCommand.customerLastname()),
+                        new Email(placeOrderCommand.customerEmail()),
+                        placeOrderCommand.customerStreet(),
+                        placeOrderCommand.customerZipcode(),
+                        placeOrderCommand.customerCity(),
+                        placeOrderCommand.customerCountry()
+                ),
+                LocalDateTime.now(),
+                lineItemList,
+                OrderState.PLACED
+        );
+
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Insert new order in DB ...");
+        Optional<Order> orderOptional = this.orderRepository.insert(orderToInsert);
+
+        if (orderOptional.isPresent()) {
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Publishing order placed domain event ...");
+            orderOutgoingMessageRelay.publish(new OrderPlacedEvent(OrderResponseMapper.toResponseFromDomain(orderOptional.get())));
+            return OrderResponseMapper.toResponseFromDomain(orderOptional.get());
+        } else {
+            throw new OrderPlacementNotSuccessfullException("OrderQueryServiceImpl: Order could not be placed!");
+        }
+    }
+```
+
+Payment verifizieren
+![Payment_received](img/teil3/payment_received.png)
+
+Nachdem wir den button payment received betätigen, wir der Status der Bestellung von PLACED auf PAYMENT_VERIFIED geändert.
+![Payment_received2](img/teil3/payment_received2.png)
+
+Über unser Frontend wird ein POST-Request mit der richten OrderID gesendet.
+
+```js
+async function paymentok(orderid)
+    {
+      await fetch(
+            `http://localhost:9999/api/v1/orders/checkpayment/${orderid}`,{
+            method:'POST',
+            headers:{
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        })
+        alert("Order payment set. Packing requestet in stock!")
+        getallorders();
+    }
+```
+
+Der OrderRestController springt nun an
+
+```java
+    @PostMapping("/orders/checkpayment/{orderid}")
+    public ResponseEntity validatePaymentForOrderWithId(@PathVariable String orderid) {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling check payment for order api request ...");
+        this.orderCommandService.handle(new OrderPaymentCheckCommand(orderid));
+        return ResponseEntity.accepted().body("Order payment check executed. Order payment ok!");
+    }
+```
+
+Es wird wieder über die orderCommandService.handle() Methode die entsprechende Implementierung aufgerufen.
+
+```java
+ @Override
+    @Transactional
+    public void handle(OrderPaymentCheckCommand orderPaymentCheckCommand) throws OrderPaymentCheckFailedException {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling order payment check command ...");
+        if (orderPaymentCheckCommand == null)
+            throw new OrderPaymentCheckFailedException("Empty command for order payment check!");
+        if (!OrderID.isValid(orderPaymentCheckCommand.orderID()))
+            throw new OrderPaymentCheckFailedException("Order ID for order payment check not valid!");
+        Optional<Order> optionalOrderToCheck = this.orderRepository.getById(new OrderID(orderPaymentCheckCommand.orderID()));
+        if (optionalOrderToCheck.isPresent()) {
+            Order order = optionalOrderToCheck.get();
+            try {
+                order.orderStateTransitionTo(OrderState.PAYMENT_VERIFIED);
+                this.orderRepository.updateOrderWithNewState(order);
+                this.orderOutgoingMessageRelay.publish(new OrderPaymentValidatedEvent(OrderResponseMapper.toResponseFromDomain(order)));
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Payment validated event published!");
+            } catch (OrderStateChangeNotPossibleException orderStateChangeNotPossibleException) {
+                throw new OrderPaymentCheckFailedException("Order payment check not possible. Order in wrong state! " + orderStateChangeNotPossibleException.getMessage());
+            }
+        } else {
+            throw new OrderPaymentCheckFailedException("Order with Id " + orderPaymentCheckCommand.orderID() + " not found for payment check!");
+        }
+    }
+```
+
+
+Packlistenitems abhaken
+![Packlistenitems](img/teil3/packing_items.png)
+![Items_Verpackt](img/teil3/items_packed.png)
+
+Mit dem button mark packed können wir die Items einzeln über ihre entsprechende ID als verpackt markieren. Diese Methode befindet sich im Frontend Ordner, in der stock.html Datei.
+
+```js
+ async function setpackedforpackingitem(packingitemid)
+    {
+       await fetch(
+            `http://localhost:9999/stock/setPackedForPacking/${packingitemid}`,{
+            method:'POST',
+            headers:{
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        })
+        getallpackings()
+    }
+```
+
+Danach springt der Stockmanagement REST-Controller an.
+```java
+@PostMapping("/setPackedForPacking/{packingItemId}")
+    public ResponseEntity setPackingItemPackedForPacking(@PathVariable Long packingItemId) {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Handling packing for item# " + packingItemId);
+
+        Optional<PackingItem> optionalPackingItem = this.packingItemRepository.findById(packingItemId);
+
+        if(!optionalPackingItem.isPresent())
+        {
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Packing for item# " + packingItemId + " not possible, item not present!");
+            return ResponseEntity.badRequest().body("Packing for item# " + packingItemId + " not possible, item not present!");
+        } else {
+            PackingItem packingItem = optionalPackingItem.get();
+
+            if(packingItem.isPacked())
+            {
+                Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Packing for item# " + packingItemId + " not possible, item already packed!");
+                return ResponseEntity.badRequest().body("Packing for item# " + packingItemId + " not possible, item already packed!");
+            } else
+            {
+                packingItem.setPacked(true);
+                packingItemRepository.save(packingItem);
+
+                Long packingId = packingItem.getPacking().getId();
+
+                Optional<Packing> packing = this.packingRepository.findById(packingId);
+
+                //check if all are packed, when one new item is packed (above) -> only works because we leave if item to pack that is already packed, see above
+                boolean allpaked = true;
+                for (PackingItem item : packing.get().getPackingItemList()) {
+                    if (!item.isPacked()) allpaked = false;
+                }
+                String returnMessage = "";
+                if (allpaked) {
+                    Logger.getLogger(this.getClass().getName()).log(Level.INFO, "All items for order# " + packing.get().getOrderId() + "packed. Publishing event ...");
+                    this.stockMessagePublisher.publishOrderPackedEventForOrderId(packing.get().getOrderId());
+                    returnMessage += "All items for order# " + packing.get().getOrderId() + "packed.";
+                }
+                returnMessage = "Packing for item# " + packingItemId + " done!" + returnMessage;
+                return ResponseEntity.ok().body(returnMessage);
+            }
+        }
+    }
+```
+
+![Request_Delivery](img/teil3/request_delivery.png)
+
+![Request_Delivery2](img/teil3/request_delivery2.png)
+
+![Mark_Delivered](img/teil3/mark_delivered.png)
+
+![Delivered](img/teil3/delivered.png)

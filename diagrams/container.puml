@@ -1,0 +1,54 @@
+@startuml ErpliteApplication_C4Container
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+' uncomment the following line and comment the first to use locally
+' !include C4_Container.puml
+!include FONTAWESOME/server.puml
+!include DEVICONS/database.puml
+!include FONTAWESOME/server.puml
+!include DEVICONS/bootstrap.puml
+!include DEVICONS/wordpress.puml
+!include DEVICONS/docker.puml
+
+LAYOUT_WITH_LEGEND()
+
+title ErpliteApplication C4Container-Diagramm
+
+SHOW_PERSON_OUTLINE()
+Person(user, User)
+
+System_Boundary(erpliteApplication, "ErpliteApplication ") {
+    Container(apiGateway, "API-Gateway", "Eine Spring Boot-Anwendung mit Spring Cloud Gateway, die eingehende Anfragen auf die entsprechenden Microservices weiterleitet und zusätzliche Funktionen wie Authentifizierung bereitstellt.")
+    Container(deliverMS, " Eine Spring Boot-Anwendung ohne explizite Architektur, die die Logik im Zusammenhang mit Bestellungen verwaltet.")
+    Container(orderMS, "OrdersMS", "SpringBoot", "Eine Spring Boot-Anwendung nach einer Ports And Adapters-Architektur mit einigen taktischen DDD-Mustern, die die Logik im Zusammenhang mit Lagerbeständen verwaltet.")
+    Container(stockMS, "StockMS", "SpringBoot", "Eine Spring Boot-Anwendung ohne explizite Architektur, die Funktionen für die Hauptmodule bereitstellt.")
+    Container(serviceDiscovery, "Service Discovery", "Eine Spring Boot-Anwendung mit Netflix Eureka, die die Microservices registriert, wenn sie gestartet werden, und einen Zugriff auf diese über Namen ermöglicht.")
+
+}
+Container(frontend, "Frontend", "Vanilla JavaScript", "Eine Anwendung mit Vanilla JavaScript, die die Microservices-Infrastruktur (Backend) über das API-Gateway nutzt. Sie besteht aus drei Seiten (Webshop, Lagerbestand, Lieferung).")
+
+
+ContainerDb(database, "MariaDB", "mariadb", "Eine Datenbank, die die Inhalte der Anwendung sowie Kundeninformationen, Bestellungen und Lagerdaten in drei verschiedenen Datenbanken speichert.")
+
+
+System_Ext(rabbitmq, "RabbitMQ", " Ein Message Broker, der die Kommunikation zwischen den Spring-Boot-Services ermöglicht.")
+
+Rel(user, frontend,"uses")
+Rel(frontend, apiGateway, "sends request")
+BiRel(apiGateway, serviceDiscovery, "requests route")
+Rel(apiGateway, orderMS, "sends request")
+Rel(apiGateway, stockMS, "sends request")
+Rel(apiGateway, deliverMS, "sends request")
+Rel(orderMS, serviceDiscovery, "registers service")
+Rel(stockMS, serviceDiscovery, "registers service")
+Rel(deliverMS, serviceDiscovery, "registers service")
+BiRel(rabbitmq, orderMS, "communicates with")
+BiRel(rabbitmq, stockMS, "communicates with")
+BiRel(rabbitmq, deliverMS, "communicates with")
+Rel(orderMS, database, "read/write")
+Rel(stockMS, database, "read/write")
+Rel(deliverMS, database, "read/write")
+
+@enduml
+

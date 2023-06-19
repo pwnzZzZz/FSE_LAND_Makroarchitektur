@@ -1,0 +1,41 @@
+@startuml Ordermanagement_C4ComponentBackend
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!define FONTAWESOME https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/font-awesome-5
+' uncomment the following line and comment the first to use locally
+' !include C4_Container.puml
+!include FONTAWESOME/server.puml
+!include DEVICONS/database.puml
+!include FONTAWESOME/server.puml
+!include DEVICONS/bootstrap.puml
+!include DEVICONS/wordpress.puml
+
+'LAYOUT_LEFT_RIGHT()
+
+title Ordermanagement C4Component-Diagram
+
+
+Container(apiGateway, "API-Gateway", "Routet Anfragen an die Microservices und bietet Zusatzfunktionen wie Authentifizierung und Lastenausgleich.")
+Container(serviceDiscovery, "Service Discovery", "Registriert und ermöglicht den Zugriff auf Microservices über Namen.")
+
+Container_Boundary(ordermanagement, "Ordermanagement") {
+Component(orderRest, "Order REST-Controller", "REST-Controller", "Bietet eine REST-Schnittstelle für Bestellungsoperationen.")
+Component(orderService, "Service Component", "Service Layer", "Verarbeitet Bestellbefehle wie das Platzieren von Bestellungen und die Zahlungsüberprüfung.")
+Component(orderRepo, "Order Repository", "Datenzugriffs-Interfaces", " Schnittstelle für den Datenzugriff auf Bestellungen in der Datenbank.")
+Component(orderMessage, "Order Outgoing Message Relay", "Veröffentlicht ausgehende Bestellereignisse und ermöglicht die Kommunikation mit anderen Komponenten und Systemen.")
+}
+
+Container(frontend, "Frontend", "Vanilla JavaScript", "Verwendet das API-Gateway, um auf die Microservices zuzugreifen (Webshop, Lagerbestand, Lieferung).")
+ContainerDb(database, "MariaDB", "mariadb", "Datenbank für Inhalte, Kundeninformationen, Bestellungen und Lagerware.")
+System_Ext(rabbitmq, "RabbitMQ", "Message Broker für die Kommunikation zwischen den Spring-Boot-Services.")
+
+Rel(frontend, apiGateway, "sends HTTP-request")
+BiRel(apiGateway, serviceDiscovery, "requests routes")
+Rel(apiGateway, orderRest, "sends HTTP-request")
+Rel(orderRest, orderService, "uses")
+Rel(orderService, orderRepo, "uses")
+Rel(orderService, orderMessage, "uses")
+Rel(orderRepo, database, "read/write")
+Rel(orderMessage, rabbitmq, "communicates")
+
+@enduml
